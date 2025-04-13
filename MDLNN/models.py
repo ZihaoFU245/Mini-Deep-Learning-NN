@@ -22,19 +22,33 @@ class Sequential:
     def add(self, layer: Union[Dense, DropOut, Input, Flatten]):
         self.layers.append(layer)
     
-    def compile(self, loss: str, optimizer: Adam):
+    def compile(self, loss: str, optimizer_params: dict = None):
         """
         Configures the model for training.
 
         Parameters:
             loss (str): Name of the loss function to use (e.g., "binary_cross_entropy").
-            optimizer (Adam): Optimizer instance for parameter updates.
+            optimizer_params (dict): Optional parameters for the Adam optimizer.
+                                   Defaults to {'learning_rate': 0.001, 'beta1': 0.9,
+                                              'beta2': 0.999, 'epsilon': 1e-8}
         """
+        # Set up loss functions
         self.loss = getattr(Loss, loss)
         self.loss_d = getattr(Loss, f"{loss}_d", None)
         if self.loss_d is None:
             raise ValueError(f"Derivative of the loss function '{loss}' not found.")
-        self.optimizer = optimizer
+
+        # Initialize weights by doing a forward pass with a small batch
+        dummy_batch = np.zeros((1, *self.layers[0].input_shape))
+        _ = self.forward(dummy_batch)
+
+        # Collect parameters from trainable layers
+        params = [layer.get_param() for layer in self.layers if hasattr(layer, 'get_param')]
+        
+        # Set up optimizer with default or custom parameters
+        if optimizer_params is None:
+            optimizer_params = {}
+        self.optimizer = Adam(parameters=params, **optimizer_params)
 
     def forward(self , X):
         for layer in self.layers:
@@ -233,12 +247,8 @@ if __name__ == "__main__":
         Dense(n_neurons=1, activation="sigmoid", initializer=Initializers.xavier_uniform) # Output layer
     ])
 
-    # Initialize optimizer with parameters from layers that have get_param attribute
-    # Need to run a dummy forward pass to initialize weights before getting params
-    _ = model.forward(X) 
-    params = [layer.get_param() for layer in model.layers if hasattr(layer, 'get_param')]
-    optimizer = Adam(parameters=params, learning_rate=0.01) # Adjusted learning rate might be needed
-    model.compile(loss="binary_cross_entropy", optimizer=optimizer)
+    # Compile the model with optimizer parameters
+    model.compile(loss="binary_cross_entropy", optimizer_params={'learning_rate': 0.01})
 
     model.summary()
     # Train for more epochs
