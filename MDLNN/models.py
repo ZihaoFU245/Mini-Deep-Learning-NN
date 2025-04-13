@@ -244,49 +244,4 @@ class Sequential:
         return self.forward(X)
     
 
-if __name__ == "__main__":
-    import numpy as np
-    from utils import Initializers, Loss, Activations
-    from layers import Dense, Input, Flatten
-    from optimizers import Adam
-
-    # XOR dataset
-    X = np.array([[0, 0],
-                  [0, 1],
-                  [1, 0],
-                  [1, 1]])
-    y = np.array([[0],
-                  [1],
-                  [1],
-                  [0]])
-
-    # Build the model for XOR
-    model = Sequential([
-        Input(input_shape=(2,)),
-        Dense(n_neurons=4, activation="tanh", initializer=Initializers.xavier_uniform), # Hidden layer
-        Dense(n_neurons=1, activation="sigmoid", initializer=Initializers.xavier_uniform) # Output layer
-    ])
-
-    # Compile the model with optimizer parameters
-    model.compile(loss="binary_cross_entropy", optimizer_params={'learning_rate': 0.01})
-
-    model.summary()
-    # Train for more epochs
-    print("Training XOR model...")
-    model.fit(X, y, epochs=200, verbose=False) # Train longer, disable verbose for speed
-    
-    # Print final loss after training
-    final_preds = model.forward(X)
-    final_loss = model.loss(final_preds, y)
-    print(f"Final Loss after training: {final_loss:.6f}")
-
-    # Make predictions
-    preds = model.predict(X)
-    print("\nXOR Test predictions (raw):")
-    print(preds)
-    print("\nXOR Test predictions (rounded):")
-    print(np.round(preds))
-
-
-
 

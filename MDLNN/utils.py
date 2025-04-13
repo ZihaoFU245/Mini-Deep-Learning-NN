@@ -364,6 +364,4 @@ class Loss:
         y_pred = np.clip(y_pred, eps, 1 - eps)
         return (y_pred - y_true) / y_pred.shape[0]
 
-if __name__ == "__main__":
-    arr = np.array([1, 2, 3, 4, -3, 0, -4])
-    print(Activations.relu(arr))
+
