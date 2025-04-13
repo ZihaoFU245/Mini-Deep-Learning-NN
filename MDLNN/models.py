@@ -102,13 +102,22 @@ class Sequential:
         print("Model Summary:")
         print("-" * 50)
         total_params = 0
+        
+        # Initialize weights by doing a forward pass with a small batch if not already done
+        if any(isinstance(layer, Dense) and layer.W is None for layer in self.layers):
+            dummy_batch = np.zeros((1, *self.layers[0].input_shape))
+            _ = self.forward(dummy_batch)
+            
         for i, layer in enumerate(self.layers):
-            if hasattr(layer, 'W') and layer.W is not None:
+            if isinstance(layer, Dense):
+                if layer.W is None:
+                    print(f"Warning: Layer {i+1} weights not initialized")
+                    continue
+                    
                 W_shape = layer.W.shape
-                b_shape = layer.b.shape
-                params = np.prod(W_shape) + np.prod(b_shape)
+                params = np.prod(W_shape) + layer.num  # weights + biases
                 total_params += params
-                print(f"Layer {i+1}: Dense ({W_shape[0]} -> {W_shape[1]}) | Params: {params}")
+                print(f"Layer {i+1}: Dense ({W_shape[0]} -> {W_shape[1]}) | activation: {layer.activation_str} | Params: {params}")
             elif isinstance(layer, Dropout):
                 print(f"Layer {i+1}: Dropout (keep_prob={layer.keep_p})")
             elif isinstance(layer, Input):

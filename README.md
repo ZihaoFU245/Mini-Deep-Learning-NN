@@ -173,6 +173,127 @@ model.compile(
 )
 ```
 
+## Real-World Examples
+
+### Example 1: XOR Problem
+The XOR problem is a classic non-linearly separable problem that demonstrates the basic capabilities of neural networks:
+
+```python
+from MDLNN.models import Sequential
+from MDLNN.layers import Input, Dense
+from MDLNN.utils import Initializers
+import numpy as np
+
+# XOR dataset
+X = np.array([[0, 0],
+              [0, 1],
+              [1, 0],
+              [1, 1]])
+y = np.array([[0],
+              [1],
+              [1],
+              [0]])
+
+# Build the model
+model = Sequential([
+    Input(input_shape=(2,)),
+    Dense(4, activation="tanh", initializer=Initializers.xavier_uniform),
+    Dense(1, activation="sigmoid", initializer=Initializers.xavier_uniform)
+])
+
+# Compile and train
+model.compile(
+    loss="binary_cross_entropy",
+    optimizer="adam",
+    optimizer_params={'learning_rate': 0.01}
+)
+
+model.fit(X, y, epochs=200, verbose=True)
+
+# Make predictions
+predictions = model.predict(X)
+print("\nPredictions (rounded):")
+print(np.round(predictions))
+```
+
+Expected output:
+```
+Predictions (rounded):
+[[0.]
+ [1.]
+ [1.]
+ [0.]]
+```
+
+### Example 2: MNIST Classification
+This example shows how to build a deeper network for classifying handwritten digits from the MNIST dataset:
+
+```python
+from MDLNN.models import Sequential
+from MDLNN.layers import Dense, Input, Dropout
+from MDLNN.utils import Initializers
+import numpy as np
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+
+# Load and preprocess MNIST data
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True, as_frame=False)
+X = X.astype('float32') / 255.0  # Normalize pixel values
+
+# Convert labels to one-hot encoding
+y_onehot = np.zeros((y.shape[0], 10))
+y = y.astype(int)
+y_onehot[np.arange(y.shape[0]), y] = 1
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y_onehot, test_size=0.2, random_state=42
+)
+
+# Build a deep model with dropout
+model = Sequential([
+    Input(input_shape=(784,)),
+    Dense(512, activation="relu", initializer=Initializers.He_uniform),
+    Dropout(keep_p=0.5),
+    Dense(256, activation="relu", initializer=Initializers.He_uniform),
+    Dropout(keep_p=0.3),
+    Dense(10, activation="softmax", initializer=Initializers.xavier_uniform)
+])
+
+# Compile with appropriate loss for multi-class classification
+model.compile(
+    loss="cross_entropy",
+    optimizer="adam",
+    optimizer_params={
+        'learning_rate': 0.001,
+        'beta1': 0.9,
+        'beta2': 0.999,
+        'epsilon': 1e-8
+    }
+)
+
+# Train with mini-batches
+model.fit(
+    X_train, 
+    y_train,
+    epochs=10,
+    batch_size=128,
+    verbose=True,
+    shuffle=True
+)
+
+# Evaluate
+loss, accuracy = model.evaluate(X_test, y_test)
+```
+
+This MNIST example demonstrates several advanced features:
+- Data preprocessing and normalization
+- One-hot encoding for multi-class classification
+- Using Dropout layers for regularization
+- He initialization for ReLU activation layers
+- Mini-batch training with progress bars
+- Model evaluation with accuracy metrics
+
 ## Requirements
 
 - NumPy
