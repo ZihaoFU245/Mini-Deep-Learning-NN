@@ -22,15 +22,16 @@ class Sequential:
     def add(self, layer: Union[Dense, DropOut, Input, Flatten]):
         self.layers.append(layer)
     
-    def compile(self, loss: str, optimizer_params: dict = None):
+    def compile(self, loss: str, optimizer: str = "adam", optimizer_params: dict = None):
         """
         Configures the model for training.
 
         Parameters:
             loss (str): Name of the loss function to use (e.g., "binary_cross_entropy").
-            optimizer_params (dict): Optional parameters for the Adam optimizer.
-                                   Defaults to {'learning_rate': 0.001, 'beta1': 0.9,
-                                              'beta2': 0.999, 'epsilon': 1e-8}
+            optimizer (str): Name of the optimizer to use (e.g., "adam", "sgd").
+            optimizer_params (dict): Optional parameters for the optimizer.
+                                   For Adam: {'learning_rate': 0.001, 'beta1': 0.9, 'beta2': 0.999, 'epsilon': 1e-8}
+                                   For SGD: {'learning_rate': 0.01, 'momentum': 0.0}
         """
         # Set up loss functions
         self.loss = getattr(Loss, loss)
@@ -48,7 +49,17 @@ class Sequential:
         # Set up optimizer with default or custom parameters
         if optimizer_params is None:
             optimizer_params = {}
-        self.optimizer = Adam(parameters=params, **optimizer_params)
+
+        # Initialize the appropriate optimizer
+        optimizer = optimizer.lower()
+        if optimizer == "adam":
+            from .optimizers import Adam
+            self.optimizer = Adam(parameters=params, **optimizer_params)
+        elif optimizer == "sgd":
+            from .optimizers import SGD
+            self.optimizer = SGD(parameters=params, **optimizer_params)
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer}. Choose from: 'adam', 'sgd'")
 
     def forward(self , X):
         for layer in self.layers:

@@ -1,7 +1,7 @@
 # Import main components
 from .models import Sequential
 from .layers import Dense, DropOut, Input, Flatten, Conv2D
-from .optimizers import Adam
+from .optimizers import Adam, SGD
 from .utils import Initializers, Activations, Loss
 
 # Export all important classes and utilities
@@ -18,6 +18,7 @@ __all__ = [
     
     # Optimizers
     'Adam',
+    'SGD',
     
     # Utilities
     'Initializers',

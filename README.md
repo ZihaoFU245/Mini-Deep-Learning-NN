@@ -34,9 +34,10 @@ model = Sequential([
     Dense(1, activation="sigmoid", initializer=Initializers.xavier_uniform)
 ])
 
-# Compile model with custom optimizer parameters
+# Compile model with custom optimizer choice and parameters
 model.compile(
     loss="binary_cross_entropy",
+    optimizer="adam",  # or "sgd"
     optimizer_params={'learning_rate': 0.01}
 )
 
@@ -81,9 +82,33 @@ predictions = model.predict(X_test)
 
 ### Optimizers
 
-- Adam (with momentum and RMSprop-style moving averages)
-  - Configurable learning rate
-  - Customizable beta1, beta2, and epsilon parameters
+The framework supports multiple optimizers:
+
+- **Adam**: Advanced optimizer with adaptive learning rates
+  ```python
+  model.compile(
+      loss="binary_cross_entropy",
+      optimizer="adam",
+      optimizer_params={
+          'learning_rate': 0.001,  # Default: 0.001
+          'beta1': 0.9,           # Default: 0.9
+          'beta2': 0.999,         # Default: 0.999
+          'epsilon': 1e-8         # Default: 1e-8
+      }
+  )
+  ```
+
+- **SGD**: Stochastic Gradient Descent with momentum support
+  ```python
+  model.compile(
+      loss="binary_cross_entropy",
+      optimizer="sgd",
+      optimizer_params={
+          'learning_rate': 0.01,  # Default: 0.01
+          'momentum': 0.9         # Default: 0.0
+      }
+  )
+  ```
 
 ## Advanced Features
 
