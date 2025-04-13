@@ -148,6 +148,73 @@ Layer 3: Dense (4 -> 1) | Params: 5
 Total trainable parameters: 17
 ```
 
+### Model Saving and Loading
+
+The framework provides two ways to save your models:
+
+1. **Complete Model Saving (Recommended)**
+   Save and load the entire model including architecture, weights, and training configuration:
+
+```python
+# Save complete model
+model.save('my_model.h5')
+
+# Load complete model
+loaded_model = Sequential.load('my_model.h5')
+
+# Use the loaded model directly
+predictions = loaded_model.predict(X_test)
+```
+
+2. **Weights-Only Saving**
+   Save and load just the model weights (requires maintaining model architecture):
+
+```python
+# Save model weights
+model.save_weights('model_weights.npz')
+
+# To load weights, first recreate the model architecture
+new_model = Sequential([
+    Input(input_shape=(784,)),
+    Dense(512, activation="relu"),
+    Dense(10, activation="softmax")
+])
+new_model.compile(loss="cross_entropy", optimizer="adam")
+
+# Then load the weights
+new_model.load_weights('model_weights.npz')
+```
+
+The complete model saving (HDF5 format) is recommended as it:
+- Saves the full model architecture
+- Preserves layer configurations
+- Stores optimizer settings
+- Maintains loss function configuration
+- Requires less code to load and use
+- Is safer and more efficient for large models
+
+Example workflow:
+```python
+# Train your model
+model.fit(X_train, y_train, epochs=10)
+
+# Save the trained weights
+model.save_weights('my_model.npz')
+
+# Later, create a new model with the same architecture
+new_model = Sequential([
+    Input(input_shape=(784,)),
+    Dense(512, activation="relu"),
+    Dense(10, activation="softmax")
+])
+new_model.compile(loss="cross_entropy", optimizer="adam")
+
+# Load the saved weights
+new_model.load_weights('my_model.npz')
+```
+
+The weights are saved in NumPy's .npz format, which is efficient for storing multiple arrays.
+
 ## Training Features
 
 - Mini-batch training with progress bars
@@ -298,6 +365,7 @@ This MNIST example demonstrates several advanced features:
 
 - NumPy
 - tqdm (for progress bars)
+- h5py (for complete model saving)
 
 ## Version
 

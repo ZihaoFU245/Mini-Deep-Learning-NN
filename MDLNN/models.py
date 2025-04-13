@@ -242,6 +242,156 @@ class Sequential:
                 layer.training = False
 
         return self.forward(X)
-    
+
+    def save_weights(self, filepath):
+        """
+        Save model weights to a file.
+
+        Parameters:
+            filepath (str): Path where to save the weights. Should end with .npz
+        """
+        weights = {}
+        for i, layer in enumerate(self.layers):
+            if isinstance(layer, Dense):
+                weights[f'layer_{i}_W'] = layer.W
+                weights[f'layer_{i}_b'] = layer.b
+        np.savez(filepath, **weights)
+        print(f"Model weights saved to {filepath}")
+
+    def load_weights(self, filepath):
+        """
+        Load model weights from a file.
+
+        Parameters:
+            filepath (str): Path to the weights file (.npz)
+        """
+        weights = np.load(filepath)
+        weight_idx = 0
+        for i, layer in enumerate(self.layers):
+            if isinstance(layer, Dense):
+                layer.W = weights[f'layer_{i}_W']
+                layer.b = weights[f'layer_{i}_b']
+                weight_idx += 1
+        print(f"Model weights loaded from {filepath}")
+
+    def save(self, filepath):
+        """
+        Save the complete model (architecture and weights) to an HDF5 file.
+        
+        Parameters:
+            filepath (str): Path where to save the model. Should end with .h5
+        """
+        import h5py
+        import json
+        
+        with h5py.File(filepath, 'w') as f:
+            # Create model architecture group
+            arch_group = f.create_group('architecture')
+            
+            # Save layer configurations
+            layer_configs = []
+            for i, layer in enumerate(self.layers):
+                layer_group = arch_group.create_group(f'layer_{i}')
+                
+                # Save layer type and configuration
+                config = {
+                    'type': layer.__class__.__name__,
+                    'config': {
+                        'activation': getattr(layer, 'activation_str', None),
+                        'units': getattr(layer, 'num', None),
+                        'keep_p': getattr(layer, 'keep_p', None),
+                        'input_shape': getattr(layer, 'input_shape', None)
+                    }
+                }
+                layer_group.attrs['config'] = json.dumps(config)
+                
+                # Save weights and biases for Dense layers
+                if isinstance(layer, Dense):
+                    weights_group = layer_group.create_group('weights')
+                    weights_group.create_dataset('W', data=layer.W)
+                    weights_group.create_dataset('b', data=layer.b)
+            
+            # Save optimizer configuration
+            if self.optimizer:
+                opt_group = f.create_group('optimizer')
+                opt_config = {
+                    'type': type(self.optimizer).__name__,
+                    'config': {k: v for k, v in self.optimizer.__dict__.items() 
+                             if k not in ['parameters', 't', 'm', 'v']}
+                }
+                opt_group.attrs['config'] = json.dumps(opt_config)
+            
+            # Save loss function name
+            if self.loss:
+                f.attrs['loss'] = self.loss.__name__
+        
+        print(f"Model saved to {filepath}")
+
+    @classmethod
+    def load(cls, filepath):
+        """
+        Load a complete model from an HDF5 file.
+        
+        Parameters:
+            filepath (str): Path to the model file (.h5)
+            
+        Returns:
+            Sequential: A new Sequential model instance with loaded architecture and weights
+        """
+        import h5py
+        import json
+        
+        with h5py.File(filepath, 'r') as f:
+            # Create layers from saved configurations
+            layers = []
+            arch_group = f['architecture']
+            
+            # Sort layer keys to maintain order
+            layer_keys = sorted([k for k in arch_group.keys()], 
+                              key=lambda x: int(x.split('_')[1]))
+            
+            for layer_key in layer_keys:
+                layer_group = arch_group[layer_key]
+                config = json.loads(layer_group.attrs['config'])
+                
+                # Create appropriate layer based on type
+                if config['type'] == 'Input':
+                    layer = Input(input_shape=config['config']['input_shape'])
+                elif config['type'] == 'Dense':
+                    layer = Dense(
+                        n_neurons=config['config']['units'],
+                        activation=config['config']['activation'],
+                        initializer=None  # Will be overwritten by weights
+                    )
+                elif config['type'] == 'Dropout':
+                    layer = Dropout(keep_p=config['config']['keep_p'])
+                elif config['type'] == 'Flatten':
+                    layer = Flatten()
+                
+                # Load weights for Dense layers
+                if config['type'] == 'Dense':
+                    weights_group = layer_group['weights']
+                    layer.W = weights_group['W'][:]
+                    layer.b = weights_group['b'][:]
+                
+                layers.append(layer)
+            
+            # Create model
+            model = cls(layers)
+            
+            # Load and set optimizer if it exists
+            if 'optimizer' in f:
+                opt_config = json.loads(f['optimizer'].attrs['config'])
+                
+                # Compile model with saved configuration
+                if 'loss' in f.attrs:
+                    model.compile(
+                        loss=f.attrs['loss'],
+                        optimizer=opt_config['type'].lower(),
+                        optimizer_params=opt_config['config']
+                    )
+            
+            return model
+
 
 
