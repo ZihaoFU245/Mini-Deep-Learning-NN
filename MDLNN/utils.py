@@ -346,6 +346,24 @@ class Loss:
         # Derivative is sign(y_pred - y_true) / m. Again, 1/m often absorbed.
         return np.sign(y_pred - y_true)
 
+    @staticmethod
+    def cross_entropy_d(y_pred, y_true):
+        """
+        Calculates the derivative of cross-entropy loss w.r.t. y_pred.
+        For multi-class classification, when using softmax activation,
+        the derivative simplifies to (y_pred - y_true).
+
+        Parameters:
+            y_pred (np.ndarray): Predicted probabilities, shape (m, n_classes).
+            y_true (np.ndarray): True labels in one-hot encoding, shape (m, n_classes).
+        
+        Returns:
+            np.ndarray: The derivative of cross-entropy loss w.r.t y_pred.
+        """
+        eps = 1e-12
+        y_pred = np.clip(y_pred, eps, 1 - eps)
+        return (y_pred - y_true) / y_pred.shape[0]
+
 if __name__ == "__main__":
     arr = np.array([1, 2, 3, 4, -3, 0, -4])
     print(Activations.relu(arr))

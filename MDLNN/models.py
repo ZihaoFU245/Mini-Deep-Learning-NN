@@ -1,8 +1,8 @@
-from optimizers import Adam
-from utils import Activations, Loss, Initializers
-from layers import Dense, DropOut, Input, Flatten
+from .optimizers import Adam
+from .utils import Activations, Loss, Initializers
+from .layers import Dense, Dropout, Input, Flatten
 from typing import Tuple, Union, List
-import numpy as np  # Added import for numpy
+import numpy as np
 from tqdm import tqdm
 
 class Sequential:
@@ -13,13 +13,13 @@ class Sequential:
     supports training via an optimizer. Each layer must implement forward() and backward().
     """
 
-    def __init__(self, layers: List[Union[Dense, DropOut, Input, Flatten]] = []):
+    def __init__(self, layers: List[Union[Dense, Dropout, Input, Flatten]] = []):
         self.layers = layers
         self.loss = None
         self.loss_d = None
         self.optimizer = None
 
-    def add(self, layer: Union[Dense, DropOut, Input, Flatten]):
+    def add(self, layer: Union[Dense, Dropout, Input, Flatten]):
         self.layers.append(layer)
     
     def compile(self, loss: str, optimizer: str = "adam", optimizer_params: dict = None):
@@ -109,7 +109,7 @@ class Sequential:
                 params = np.prod(W_shape) + np.prod(b_shape)
                 total_params += params
                 print(f"Layer {i+1}: Dense ({W_shape[0]} -> {W_shape[1]}) | Params: {params}")
-            elif isinstance(layer, DropOut):
+            elif isinstance(layer, Dropout):
                 print(f"Layer {i+1}: Dropout (keep_prob={layer.keep_p})")
             elif isinstance(layer, Input):
                 print(f"Layer {i+1}: Input {layer.input_shape}")

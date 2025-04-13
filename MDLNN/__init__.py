@@ -1,6 +1,6 @@
 # Import main components
 from .models import Sequential
-from .layers import Dense, DropOut, Input, Flatten, Conv2D
+from .layers import Dense, Dropout, Input, Flatten, Conv2D
 from .optimizers import Adam, SGD
 from .utils import Initializers, Activations, Loss
 
@@ -11,7 +11,7 @@ __all__ = [
     
     # Layers
     'Dense',
-    'DropOut',
+    'Dropout',
     'Input',
     'Flatten',
     'Conv2D',

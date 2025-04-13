@@ -1,5 +1,5 @@
 import numpy as np
-from utils import Initializers , Activations
+from .utils import Initializers , Activations
 
 class Dense:
     """
@@ -136,7 +136,7 @@ class Dense:
 
 
     
-class DropOut:
+class Dropout:
     """
     Dropout regularization layer.
 
